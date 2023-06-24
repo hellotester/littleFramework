@@ -1,0 +1,34 @@
+selenium:
+  browser: "chrome"
+  browserVersion: ""
+  headless: false
+  remoteDriverUrl: ""
+  browserSize: "" # 1900*1080
+  browserPosition: "" # x,y
+  driverManagerEnabled: true
+  webDriverLogEnabled: false
+  webDriverLogFolder: ""
+  proxyEnabled: false
+  proxyHost: ""
+  proxyPort: ""
+  browserBinary: ""
+  pageLoadStrategy: "normal"
+  downloadsFolder: ""
+  browserOptionsArgs:
+    - "--remote-allow-origins=*"
+    - "--start-maximized"
+
+
+timeout:
+  pageLoadTimeout: 30000
+  javaScriptExecuteTimeout: 1000
+  searchDomContentTimeout: 15000
+  actionsTimeout: 3000
+  pollingInterval: 500
+
+testStrategy:
+  baseUrl: ""
+  holdBrowserOpen: false
+  reopenBrowserOnFail: true
+  failScreenshots: true
+  actionFailRetry: false
