@@ -5,7 +5,7 @@ import org.framework.CommandRule;
 import org.framework.Conj;
 import org.framework.Should;
 
-public interface Select extends Should{
+public interface Select extends Should, Conj {
 
     @CommandRule("Select")
     void waitForSelect(String optionByText);

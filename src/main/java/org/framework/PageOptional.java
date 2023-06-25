@@ -1,11 +1,10 @@
 package org.framework;
 
 import org.awaitility.core.ConditionTimeoutException;
+import org.framework.emun.Timeout;
 import org.framework.ui.WrapEleUI;
 import org.framework.util.StringUtil;
-import org.openqa.selenium.NotFoundException;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.events.WebDriverListener;
 import org.slf4j.Logger;
@@ -14,10 +13,11 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.lang.reflect.*;
+import java.lang.reflect.Proxy;
 import java.net.URL;
+import java.util.LinkedHashSet;
 import java.util.Optional;
-
-import static org.framework.Wait.waitPageLoadComplete;
+import java.util.Set;
 
 
 public final class PageOptional {
@@ -114,7 +114,6 @@ public final class PageOptional {
                 }
             }
             open(url);
-            waitPageLoadComplete();
             return page;
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
             throw new RuntimeException("page init fail.", e);
@@ -149,37 +148,37 @@ public final class PageOptional {
      * @param locator
      */
     public static void waitForClick(String locator) {
-        getWebElement(locator).waitForClick();
+        get(locator).waitForClick();
     }
 
 
     public static void waitForRightClick(String locator) {
         //run(locator, "rightClick");
-        getWebElement(locator).waitForRightClick();
+        get(locator).waitForRightClick();
     }
 
 
     public static void waitForDoubleClick(String locator) {
         //run(locator, "doubleClick");
-        getWebElement(locator).waitForDoubleClick();
+        get(locator).waitForDoubleClick();
     }
 
 
     public static void waitForJSClick(String locator) {
         // run(locator, "JsClick");
-        getWebElement(locator).waitForJSClick();
+        get(locator).waitForJSClick();
     }
 
 
     public static void waitForType(String locator, String text) {
         //run(locator, "type", text);
-        getWebElement(locator).waitForType(text);
+        get(locator).waitForType(text);
     }
 
 
     public static void waitForClickAndType(String locator, String text) {
         //run(locator, new String[]{"click", "type"}, text);
-        getWebElement(locator).waitForClickAndType(text);
+        get(locator).waitForClickAndType(text);
     }
 
 
@@ -193,54 +192,59 @@ public final class PageOptional {
 
     public static void waitForSetAttribute(String locator, String attName, String attVal) {
         //run(locator, "setAttribute", attName, attVal);
-        getWebElement(locator).setAttribute(attName, attVal);
+        get(locator).setAttribute(attName, attVal);
     }
 
     public static String getElementAttributeForValue(String locator, String attName) {
-        return getWebElement(locator).getAttribute(attName);
+        return get(locator).getAttribute(attName);
         //return (String) run(locator, "getAttribute", attName);
     }
 
 
     public static String getElementCssValue(String locator, String cssAttributeName) {
-        return getWebElement(locator).getCssValue(cssAttributeName);
+        return get(locator).getCssValue(cssAttributeName);
         //return (String) run(locator, "getCssAttribute", cssAttributeName);
     }
 
 
     public static void waitForSelect(String locator, String optionText) {
         //run(locator, "select", optionText);
-        getWebElement(locator).waitForSelect(optionText);
+        get(locator).waitForSelect(optionText);
 
     }
 
     public static void waitForClickSelect(String locator, String optionText) {
         //run(locator, new String[]{"click", "select"}, optionText);
-        getWebElement(locator).waitForClickSelect(optionText);
+        get(locator).waitForClickSelect(optionText);
     }
 
     public static void waitForSelect(String locator, int optionIndex) {
         //run(locator, "select", optionIndex);
-        getWebElement(locator).waitForSelect(optionIndex);
+        get(locator).waitForSelect(optionIndex);
     }
 
     public static void waitForClickSelect(String locator, int optionIndex) {
         //run(locator, new String[]{"click", "select"}, optionIndex);
-        getWebElement(locator).waitForClickSelect(optionIndex);
+        get(locator).waitForClickSelect(optionIndex);
     }
 
     public static void waitForDropTo(String fromLocator, String toLocator) {
-        getWebElement(fromLocator).dropTo(toLocator);
+        get(fromLocator).dropTo(toLocator);
     }
 
 
-    public static WrapEleUI getWebElement(String locator) {
+    public static WrapEleUI get(String locator) {
         if (driverContainer.hasWebDriverStarted()) {
             return (WrapEleUI) Proxy.newProxyInstance(PageOptional.class.getClassLoader(),
                     new Class[]{WrapEleUI.class},
                     new ElementProxy(WebElementFinder.with(getAndCheckWebDriver(), locator)));
         }
         throw new RuntimeException("browser not started.");
+    }
+
+    public static WebElement selenium(String locator){
+        checkHasBrowser();
+        return WebElementFinder.with(getAndCheckWebDriver(), locator).findElement();
     }
 
 
@@ -277,6 +281,23 @@ public final class PageOptional {
         throw new RuntimeException("browser not started.");
     }
 
+    public static Set<String> getAllTabs() {
+        checkHasBrowser();
+        Set<String> tabs = new LinkedHashSet<>();
+        WebDriver driver = getAndCheckWebDriver();
+        String origin = driver.getWindowHandle();
+        for (String windowHandle : driver.getWindowHandles()) {
+            tabs.add(driver.switchTo().window(windowHandle).getTitle());
+        }
+        driver.switchTo().window(origin);
+        return tabs;
+    }
+
+    public static void iframe(String locator){
+        checkHasBrowser();
+        getAndCheckWebDriver().switchTo().frame(selenium(locator));
+    }
+
 
     public static void switchWindowByTitle(String title) {
         checkHasBrowser();
@@ -289,6 +310,7 @@ public final class PageOptional {
             }
         }
         if (!isTarget) {
+            log.debug("has tabs :{}", getAllTabs());
             throw new NotFoundException("can't find title be " + title);
         }
     }
@@ -314,7 +336,7 @@ public final class PageOptional {
         }
     }
 
-    public static void shouldContentText(String text){
+    public static void shouldContentText(String text) {
         try {
             WebDriver driver = getAndCheckWebDriver();
             Wait.unit(() -> driver.getPageSource().contains(text));
@@ -333,29 +355,53 @@ public final class PageOptional {
 
     // https://blog.csdn.net/qq_50854790/article/details/123610184
     public static WrapEleUI findAncestor(String locator, String parent) {
-        return getWebElement(locator).ancestor(parent);
+        return get(locator).ancestor(parent);
     }
 
 
     public static WrapEleUI findDescendant(String locator, String child) {
-        return getWebElement(locator).descendant(child);
+        return get(locator).descendant(child);
     }
 
     public static WrapEleUI findSibling(String locator, int sibling) {
-        return getWebElement(locator).sibling(sibling);
+        return get(locator).sibling(sibling);
     }
 
 
-    private static Object run(String locator, String commands) {
+    public static void waitForAjax() {
+        checkHasBrowser();
+        WebDriver driver = getAndCheckWebDriver();
+        Wait.unit(() -> Boolean.TRUE.equals(JavaScript.waitForAjax.execute(driver)), Timeout.getInstance().getWaitForAjaxTimeout());
+    }
+
+
+    public static void waitForAjaxRequest(String requestPartialUrl, int timeoutInSeconds) {
+        checkHasBrowser();
+        WebDriver driver = getAndCheckWebDriver();
+        Wait.unit(() -> Boolean.TRUE.equals(JavaScript.waitForAjaxUrl.execute(driver, requestPartialUrl)), timeoutInSeconds);
+    }
+
+
+    public static void waitPageLoadsCompletely() {
+        checkHasBrowser();
+        WebDriver andCheckWebDriver = getAndCheckWebDriver();
+        Wait.unit(() -> ((JavascriptExecutor) andCheckWebDriver)
+                        .executeScript("return document.readyState").equals("complete"),
+                Timeout.getInstance().getPageLoadTimeout());
+        waitForAjax();
+    }
+
+
+    private static Object run(String locator, String commands) throws Exception {
         return run(locator, new String[]{commands});
     }
 
-    private static Object run(String locator, String commands, Object... args) {
+    private static Object run(String locator, String commands, Object... args) throws Exception {
         return run(locator, new String[]{commands}, args);
     }
 
 
-    private static Object run(String locator, String[] commands, Object... args) {
+    private static Object run(String locator, String[] commands, Object... args) throws Exception {
         if (!driverContainer.hasWebDriverStarted()) {
             throw new RuntimeException("browser not started.");
         }

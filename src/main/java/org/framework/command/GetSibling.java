@@ -30,7 +30,7 @@ public class GetSibling implements Command<WrapEleUI> {
             xpath = By.xpath(String.format("preceding-sibling::*[%d]", Math.abs(index)));
         }
         return (WrapEleUI) Proxy.newProxyInstance(ClassUtil.getClassLoad(), new Class[]{WrapEleUI.class},
-                new ElementProxy(WebElementFinder.with(locator.driver(), locator, xpath, 0, null)));
+                new ElementProxy(WebElementFinder.with(locator.driver(), locator, xpath,null, 0, null)));
     }
 
 }

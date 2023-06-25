@@ -1,5 +1,6 @@
 package org.framework;
 
+import org.framework.emun.TestStrategy;
 import org.framework.emun.Timeout;
 import org.framework.ex.ExceptionWrapper;
 import org.framework.ui.WrapEleUI;
@@ -90,8 +91,7 @@ public class ElementProxy implements InvocationHandler {
     }
 
     Object dispatchAndRetry(Object proxy, Method method, Object[] args) throws Throwable {
-        Stopwatch stopwatch = new Stopwatch(timeout.getRetryTimeoutTimeout());
-
+        int tol = 2;
         Throwable lastError;
         do {
             try {
@@ -106,7 +106,7 @@ public class ElementProxy implements InvocationHandler {
                 return result;
             } catch (InvocationTargetException e) {
                 lastError = e.getTargetException();
-            } catch (WebDriverException | IndexOutOfBoundsException | AssertionError e) {
+            } catch (AssertionError | RuntimeException e) {
                 lastError = e;
             }
             if (Cleanup.of.isInvalidSelectorError(lastError)) {
@@ -114,12 +114,13 @@ public class ElementProxy implements InvocationHandler {
             } else if (!shouldRetryAfterError(lastError)) {
                 throw lastError;
             }
+            tol--;
             log.info("--------------重试----------");
-            stopwatch.sleep(timeout.getPollingInterval());
+            sleep(timeout.getPollingInterval());
         }
-        while (!stopwatch.isTimeoutReached());
+        while (TestStrategy.getInstance().isActionFailRetry() && tol>=0);
 
-        throw new ExceptionWrapper().wrap(lastError, finder);
+        throw ExceptionWrapper.wrap(lastError, finder);
     }
 
     static boolean shouldRetryAfterError(Throwable e) {
@@ -138,5 +139,13 @@ public class ElementProxy implements InvocationHandler {
 
         return e instanceof Exception || e instanceof AssertionError;
     }
+    public void sleep(long milliseconds) {
 
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+    }
 }

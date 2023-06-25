@@ -25,6 +25,7 @@ timeout:
   searchDomContentTimeout: 15000
   actionsTimeout: 3000
   pollingInterval: 500
+  waitForClickTimeout: 10000
 
 testStrategy:
   baseUrl: ""

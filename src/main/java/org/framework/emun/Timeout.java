@@ -26,16 +26,20 @@ public enum Timeout {
         return searchDomContentTimeout;
     }
 
-    public long getRetryTimeoutTimeout() {
-        return retryTimeout;
+    public long getRetryCount() {
+        return retryCount;
     }
 
     public long getToClickableTimeout() {
-        return toClickableTimeout;
+        return waitForClickTimeout;
     }
 
-    public long getToVisibleTimeout() {
-        return toVisibleTimeout;
+    public long getWaitForVisibleTimeout() {
+        return waitForVisibleTimeout;
+    }
+
+    public long getWaitForAjaxTimeout() {
+        return waitForAjaxTimeout;
     }
 
     public long getPollingInterval() {
@@ -46,23 +50,23 @@ public enum Timeout {
     long pageLoadTimeout;
     @Value("${timeout.javaScriptExecuteTimeout:1000}")
     long javaScriptExecuteTimeout;
-    @Value("${timeout.searchDomContentTimeout:5000}")
+    @Value("${timeout.searchDomContentTimeout:15000}")
     long searchDomContentTimeout;
 
     @Value("${timeout.waitForClickTimeout:5000}")
     long waitForClickTimeout;
 
+
     @Value("${timeout.waitForVisibleTimeout:5000}")
     long waitForVisibleTimeout;
 
-    @Value("${timeout.toClickableTimeout:5000}")
-    long toClickableTimeout;
 
-    @Value("${timeout.toVisibleTimeout:5000}")
-    long toVisibleTimeout;
+    @Value("${waitAjaxTimeout:8000}")
+    long waitForAjaxTimeout;
+
 
     @Value("${timeout.retryTimeout:5000}")
-    long retryTimeout;
+    long retryCount;
     @Value("${timeout.pollingInterval:500}")
     long pollingInterval;
 
@@ -77,7 +81,7 @@ public enum Timeout {
                 "pageLoadTimeout=" + pageLoadTimeout +
                 ", javaScriptExecuteTimeout=" + javaScriptExecuteTimeout +
                 ", searchDomContentTimeout=" + searchDomContentTimeout +
-                ", actionsTimeout=" + retryTimeout +
+                ", actionsTimeout=" + retryCount +
                 ", pollingInterval=" + pollingInterval +
                 '}';
     }

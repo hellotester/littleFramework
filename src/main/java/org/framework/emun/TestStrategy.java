@@ -44,7 +44,7 @@ public enum TestStrategy {
     boolean reopenBrowserOnFail;
     @Value("testStrategy.failScreenshots")
     boolean failScreenshots;
-    @Value("testStrategy.actionFailRetry")
+    @Value("${testStrategy.actionFailRetry:true}")
     boolean actionFailRetry;
 
     public static TestStrategy getInstance() {

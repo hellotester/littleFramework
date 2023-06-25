@@ -47,6 +47,22 @@ public enum JavaScript {
         }
     },
 
+    waitForAjax {
+        @Override
+        public Object execute(WebDriver driver, Object... args) {
+            return run((JavascriptExecutor) driver, getScript("waitForAjax.js"));
+        }
+    },
+
+
+    waitForAjaxUrl {
+        @Override
+        public Object execute(WebDriver driver, Object... args) {
+            checkArgsLength(args, 1);
+            return  run((JavascriptExecutor) driver, getScript("waitForAjaxRequestUrl.js"), args[0]);
+        }
+    },
+
 
     ;
 

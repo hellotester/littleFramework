@@ -1,12 +1,11 @@
 package org.framework;
 
 import javax.annotation.CheckReturnValue;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import static java.lang.System.nanoTime;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-@ParametersAreNonnullByDefault
+
 public class Stopwatch {
   private final long startTimeNano;
   private final long timeoutNano;

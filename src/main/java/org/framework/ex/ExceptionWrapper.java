@@ -7,19 +7,30 @@ import org.openqa.selenium.*;
 
 public class ExceptionWrapper {
 
-    public Throwable wrap(Throwable lastError, WebElementFinder elementFinder) {
+    public static Throwable wrap(Throwable lastError, WebElementFinder elementFinder) {
         if (lastError instanceof InvalidElementStateException) {
-            return new InvalidStateException(elementFinder.getAlias(), lastError);
+            return new InvalidStateException(elementFinder.alias(), lastError);
         } else if (isElementNotClickableException(lastError)) {
-            return new ElementIsNotClickableException(elementFinder.getAlias(), lastError);
+            return new ElementIsNotClickableException(elementFinder.alias(), lastError);
         } else if (lastError instanceof StaleElementReferenceException || lastError instanceof NotFoundException) {
-            return new NoSuchElementException(elementFinder.getAlias(), lastError);
+            return new NoSuchElementException(elementFinder.alias(), lastError);
+        }
+        return lastError;
+    }
+
+    public static Throwable wrap(Throwable lastError, String errMsg) {
+        if (lastError instanceof InvalidElementStateException) {
+            return new InvalidStateException(errMsg, lastError);
+        } else if (isElementNotClickableException(lastError)) {
+            return new ElementIsNotClickableException(errMsg, lastError);
+        } else if (lastError instanceof StaleElementReferenceException || lastError instanceof NotFoundException) {
+            return new NoSuchElementException(errMsg, lastError);
         }
         return lastError;
     }
 
 
-    private boolean isElementNotClickableException(Throwable e) {
+    private static boolean isElementNotClickableException(Throwable e) {
         return e instanceof WebDriverException && e.getMessage().contains("is not clickable");
     }
 }

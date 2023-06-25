@@ -3,16 +3,11 @@ package org.framework.command;
 import com.google.auto.service.AutoService;
 import org.framework.Command;
 import org.framework.Conj;
-import org.framework.Wait;
 import org.framework.WebElementFinder;
-import org.framework.util.StringUtil;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -43,10 +38,10 @@ public class Should implements Command<Conj> {
         Object conditionVal = args[1];
         if (matcher.matches()) {
             condition = matcher.group("condition");
-            result = new Result(conditionVal, beCssAttribute(locator.driver(), locator.selocator(), condition));
+            result = new Result(conditionVal, beCssAttribute(locator , condition));
         } else if (arg.contains(".")) {
             condition = arg.substring(0, arg.indexOf("."));// xx.yy
-            result = new Result(conditionVal, beAttribute(locator.driver(), locator.selocator(), condition));
+            result = new Result(conditionVal, beAttribute(locator, condition));
         } else {
             throw new IllegalArgumentException("parameter must look like attribute.be or attribute.not" +
                     "\n" +
@@ -77,14 +72,15 @@ public class Should implements Command<Conj> {
     }
 
 
-    String beAttribute(WebDriver driver, By by, String name) {
-        return Wait.waitElementExist(driver, by).getAttribute(name);
+    String beAttribute(WebElementFinder finder ,String attributeName) {
+
+        return finder.findElement().getAttribute(attributeName);
 
     }
 
 
-    String beCssAttribute(WebDriver driver, By by, String name) {
-        return rgbToHex(Wait.waitElementExist(driver, by).getCssValue(name));
+    String beCssAttribute(WebElementFinder finder, String cssProperName) {
+        return rgbToHex(finder.findElement().getCssValue(cssProperName));
     }
 
     static String rgbToHex(String str) {

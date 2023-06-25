@@ -40,14 +40,10 @@ public enum CommandRunner {
      */
 
     @Nullable
-    public <T> T execute(Object proxy, WebElementFinder elementFinder, String commandName, @Nullable Object... args) {
+    public <T> T execute(Object proxy, WebElementFinder elementFinder, String commandName, @Nullable Object... args) throws Exception {
         Command<T> command = load(commandName);
-        try {
-            log.debug("execute:{} target is: {}", command.getClass().getSimpleName(), elementFinder.getAlias());
-            return command.execute(proxy, elementFinder, args);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        log.debug("execute:{} target is: {}", command.getClass().getSimpleName(), elementFinder.alias());
+        return command.execute(proxy, elementFinder, args);
     }
 
 

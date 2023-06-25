@@ -22,61 +22,77 @@ public final class WebElementFinder {
 
     private final WebElementFinder parentFinder;
 
-    @Nonnull
+
     public By selocator() {
         return selocator;
     }
 
-    @Nonnull
-    private final By selocator;
-    private final String locator;
 
-    public String getAlias() {
-        return Objects.isNull(alias) ? locator : alias;
+    private By selocator;
+    private String originlocator;
+
+    public String alias() {
+        if (Objects.isNull(alias)) {
+            if (StringUtil.isNotBlank(originlocator)) {
+                return originlocator + " index:" + index;
+            }
+            return selocator.toString() + "index:" + index;
+        }
+        return alias;
     }
 
     private final String alias;
-    private final int index;
+    private int index;
 
     public WebDriver driver() {
         return webDriver;
     }
 
 
-    private WebElementFinder(@Nonnull WebDriver webDriver, WebElementFinder finder, @Nonnull By selocator, int index, String alias) {
+    private WebElementFinder(@Nonnull WebDriver webDriver, WebElementFinder finder, By selocator, String originlocator, int index, String alias) {
         this.webDriver = webDriver;
         this.parentFinder = finder;
         this.selocator = selocator;
-        this.locator = selocator.toString().replaceAll("By.", "");
+        this.originlocator = originlocator;
         this.alias = alias;
         this.index = index;
     }
 
 
     public static WebElementFinder with(WebDriver driver, String locator) {
-        return with(driver, locatorExpressionConvertToBy(driver, locator));
+        return with(driver, locator, null);
     }
 
     public static WebElementFinder with(WebDriver driver, By by) {
-        return with(driver, null, by, 0, null);
+        return with(driver, null, by, null, 0, null);
     }
 
     public static WebElementFinder with(WebDriver webDriver, String locator, String alias) {
-        return with(webDriver, null, locatorExpressionConvertToBy(webDriver, locator), initIndexFromLocatorExpression(locator), alias);
+        return with(webDriver, null, null, locator, 0, alias);
     }
 
-    public static WebElementFinder with(WebDriver driver, WebElementFinder parent, By by, int index, String alias) {
-        return new WebElementFinder(driver, parent, by, index, alias);
+    public static WebElementFinder with(WebDriver driver, WebElementFinder parent, By by, String locator, int index, String alias) {
+        return new WebElementFinder(driver, parent, by, locator, index, alias);
     }
 
 
     public WebElement findElement() {
-        log.info("from page {} search alias:{} selocator: {} index: {}", driver().getTitle(), alias, locator, index);
-        return Objects.equals(index, 0) ?
-                Objects.nonNull(parentFinder) ? Wait.waitElementExist(parentFinder.findElement(), selocator)
-                        : Wait.waitElementExist(webDriver, selocator) :
-                Objects.nonNull(parentFinder) ? Wait.waitElementExist(parentFinder.findElement(), selocator, index) :
-                        Wait.waitElementExist(webDriver, selocator, index);
+        if (selocator == null && originlocator == null) {
+            throw new IllegalArgumentException("no locator!");
+        }
+        if (selocator == null) {
+            selocator = locatorExpressionConvertToBy(webDriver, originlocator);
+        }
+        if (index == 0 && originlocator != null) {
+            index = getIndexFromLocatorExpression(originlocator);
+        }
+        log.info("from page {} search alias:{} selocator: {} index: {}", driver().getTitle(), alias, selocator, index);
+        if (parentFinder != null) {
+            return Wait.waitElementExist(parentFinder.findElement(), selocator, index);
+        } else {
+            return Wait.waitElementExist(webDriver, selocator, index);
+        }
+
     }
 
 
@@ -87,7 +103,7 @@ public final class WebElementFinder {
         if (StringUtil.isBlank(locator)) {
             throw new IllegalArgumentException("locator expression can't be empty!");
         }
-        int index = initIndexFromLocatorExpression(locator);
+        int index = getIndexFromLocatorExpression(locator);
         if (index != 0) {
             locator = locator.replaceAll("\\{" + index + "}", "");
         }
@@ -107,7 +123,7 @@ public final class WebElementFinder {
     }
 
 
-    private static int initIndexFromLocatorExpression(String locator) {
+    private static int getIndexFromLocatorExpression(String locator) {
         Matcher matcher = indexRule.matcher(locator);
         if (matcher.matches()) {
             return Integer.parseInt(matcher.group("index"));

@@ -2,15 +2,17 @@ package org.framework.ui;
 
 
 import org.framework.CommandRule;
+import org.framework.Conj;
+import org.framework.Should;
 import org.openqa.selenium.WebElement;
 
 
-public interface WrapEleUI extends WebElement, Button, Select, Input {
+public interface WrapEleUI extends WebElement, Button, Select, Input, Should, Conj {
 
     /**
      * find ancestor
-     *  example:
-     *   el.descendant("class^='class'&text()='text'")
+     * example:
+     * el.descendant("class^='class'&text()='text'")
      *
      * @param locator
      * @return

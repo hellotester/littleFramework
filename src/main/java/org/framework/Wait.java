@@ -2,20 +2,16 @@ package org.framework;
 
 import org.awaitility.core.ConditionTimeoutException;
 import org.framework.emun.Timeout;
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.SearchContext;
-import org.openqa.selenium.WebElement;
+import org.framework.ex.ElementIsNotClickableException;
+import org.framework.ex.ElementNoDisplayedException;
+import org.openqa.selenium.*;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.regex.Matcher;
 
 import static org.awaitility.Awaitility.await;
 
@@ -25,23 +21,24 @@ public class Wait {
 
     public static WebElement waitElementBeSelected(WebElement searchContext) {
         await().pollDelay(timeout.getPollingInterval(), TimeUnit.MILLISECONDS)
-                .atMost(timeout.getToVisibleTimeout(), TimeUnit.MILLISECONDS)
+                .atMost(timeout.getWaitForVisibleTimeout(), TimeUnit.MILLISECONDS)
                 .until(searchContext::isSelected);
         return searchContext;
     }
 
     public static WebElement waitElementVisible(WebElement searchContext) {
         await().pollDelay(timeout.getPollingInterval(), TimeUnit.MILLISECONDS)
-                .atMost(timeout.getToVisibleTimeout(), TimeUnit.MILLISECONDS)
+                .atMost(timeout.getWaitForVisibleTimeout(), TimeUnit.MILLISECONDS)
                 .until(searchContext::isDisplayed);
         return searchContext;
     }
 
     public static WebElement waitElementVisible(SearchContext searchContext, By by) {
-        return await().ignoreException(NoSuchElementException.class).
-                pollDelay(timeout.getPollingInterval(), TimeUnit.MILLISECONDS)
-                .atMost(timeout.getSearchDomContentTimeout(), TimeUnit.MILLISECONDS)
-                .until(() -> searchContext.findElement(by), WebElement::isDisplayed);
+        try {
+            return unit(() -> searchContext.findElement(by), WebElement::isDisplayed, timeout.getWaitForVisibleTimeout());
+        } catch (ConditionTimeoutException timeoutException) {
+            throw new ElementNoDisplayedException(by.toString(), timeoutException);
+        }
     }
 
     public static List<WebElement> waitAllElementsVisible(SearchContext searchContext, By by) {
@@ -77,10 +74,12 @@ public class Wait {
     }
 
     public static WebElement waitElementClickable(SearchContext searchContext, By by) {
-        return await().ignoreException(NoSuchElementException.class)
-                .pollDelay(timeout.getPollingInterval(), TimeUnit.MILLISECONDS)
-                .atMost(timeout.getSearchDomContentTimeout(), TimeUnit.MILLISECONDS)
-                .until(() -> searchContext.findElement(by), WebElement::isEnabled);
+        try {
+            waitElementVisible(searchContext, by);
+            return unit(() -> searchContext.findElement(by), WebElement::isEnabled, timeout.getToClickableTimeout());
+        } catch (ConditionTimeoutException timeoutException) {
+            throw new ElementIsNotClickableException(by.toString(), timeoutException);
+        }
     }
 
     public static List<WebElement> waitAllElementsClickable(SearchContext searchContext, By by) {
@@ -138,21 +137,27 @@ public class Wait {
     }
 
     public static void unit(Callable<Boolean> callable) {
-        await().pollDelay(timeout.getPollingInterval(), TimeUnit.MILLISECONDS)
-                .atMost(timeout.getSearchDomContentTimeout(), TimeUnit.MILLISECONDS)
+        unit(callable,0);
+    }
+
+    public static void unit(Callable<Boolean> callable, long timeoutMill) {
+        await().ignoreException(WebDriverException.class)
+                .pollDelay(timeout.getPollingInterval(), TimeUnit.MILLISECONDS)
+                .atMost(timeoutMill == 0 ? timeout.getSearchDomContentTimeout() : timeoutMill, TimeUnit.MILLISECONDS)
                 .until(callable);
     }
 
     public static <T> T unit(Callable<T> callable, Predicate<T> matcher) {
-        return await().pollDelay(timeout.getPollingInterval(), TimeUnit.MILLISECONDS)
-                .atMost(timeout.getSearchDomContentTimeout(), TimeUnit.MILLISECONDS)
-                .until(callable, matcher);
+        return unit(callable, matcher, timeout.getSearchDomContentTimeout());
     }
 
-    public static void waitPageLoadComplete() {
 
-
-
+    public static <T> T unit(Callable<T> callable, Predicate<T> matcher, long timeoutMill) {
+        return await()
+                .ignoreExceptions()
+                .pollDelay(timeout.getPollingInterval(), TimeUnit.MILLISECONDS)
+                .atMost(timeoutMill == 0 ? 20 : timeoutMill, TimeUnit.MILLISECONDS)
+                .until(callable, matcher);
     }
 
 

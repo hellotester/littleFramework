@@ -41,7 +41,7 @@ public class GetChild implements Command<WrapEleUI> {
         By xpath = By.xpath("descendant::*" + attrs);
         System.out.println(xpath);
         return (WrapEleUI) Proxy.newProxyInstance(ClassUtil.getClassLoad(), new Class[]{WrapEleUI.class},
-                new ElementProxy(WebElementFinder.with(locator.driver(), locator, xpath, 0, null)));
+                new ElementProxy(WebElementFinder.with(locator.driver(), locator, xpath,null, 0, null)));
     }
 
 

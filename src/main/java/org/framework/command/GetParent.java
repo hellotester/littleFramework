@@ -49,7 +49,7 @@ public class GetParent implements Command<WrapEleUI> {
 
         By xpath = By.xpath("ancestor::*" + attrs);
         return (WrapEleUI) Proxy.newProxyInstance(ClassUtil.getClassLoad(), new Class[]{WrapEleUI.class},
-                new ElementProxy(WebElementFinder.with(locator.driver(), locator, xpath, 0, null)));
+                new ElementProxy(WebElementFinder.with(locator.driver(), locator, xpath,null, 0, null)));
     }
 
 
